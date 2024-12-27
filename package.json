@@ -1,0 +1,23 @@
+{
+  "name": "htms",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Trevor Nichols",
+  "license": "GPL-3.0",
+  "description": "",
+  "dependencies": {
+    "linkedom": "^0.18.6",
+    "markdown-it": "^14.1.0",
+    "prettier": "^3.4.2",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
