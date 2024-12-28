@@ -119,9 +119,10 @@ export const processDirectory = async (dirpath: string, outpath: string, config:
         switch (ext) {
             case conf.files.extensions.html:
                 return processFileString(p, conf)
-                    .then(o => 
-                        fs.writeFile(path.resolve(outpath, f), o)
-                    )
+                    .then(async o => {
+                        await fs.mkdir(path.parse(outpath).dir, { recursive: true })
+                        await fs.writeFile(path.resolve(outpath, f), o)
+                    })
             case conf.files.extensions.md:
                 let renderer = path.resolve(pa.dir, conf.files.md_renderer)
                 let md = await processFile(p, conf, null, null, true)
