@@ -120,8 +120,9 @@ export const processDirectory = async (dirpath: string, outpath: string, config:
             case conf.files.extensions.html:
                 return processFileString(p, conf)
                     .then(async o => {
-                        await fs.mkdir(path.parse(outpath).dir, { recursive: true })
-                        await fs.writeFile(path.resolve(outpath, f), o)
+                        let op = path.resolve(outpath, f)
+                        await fs.mkdir(path.parse(op).dir, { recursive: true })
+                        await fs.writeFile(op, o)
                     })
             case conf.files.extensions.md:
                 let renderer = path.resolve(pa.dir, conf.files.md_renderer)
@@ -134,9 +135,10 @@ export const processDirectory = async (dirpath: string, outpath: string, config:
                     })
             default:
                 if (conf.files.extensions.ignore.includes(ext)) return
-                let outp = path.resolve(outpath, f)
                 if (await fs.stat(p).then(s => s.isDirectory())) return
-                fs.copyFile(p, outp)
+                let outp = path.resolve(outpath, f)
+                await fs.mkdir(path.parse(outp).dir, { recursive: true })
+                await fs.copyFile(p, outp)
         }
     }))
 }
