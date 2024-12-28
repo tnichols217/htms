@@ -3,6 +3,7 @@
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     treefmt-nix.url = "github:numtide/treefmt-nix";
+    gitignore.url = "github:hercules-ci/gitignore.nix";
   };
   outputs = {...} @ inputs:
     inputs.flake-utils.lib.eachDefaultSystem (
@@ -45,6 +46,13 @@
         in
           treefmtconfig.config.build.wrapper;
         apps = rec {
+        };
+        packages = rec {
+          script = pkgs.callPackage ./package.nix { flake-root = ./.; gitignoreSource = inputs.gitignore.lib.gitignoreSource; };
+          htms = pkgs.writeShellScriptBin "htms" ''
+            ${pkgs.bun}/bin/bun ${script}/bin/index.js $@
+          '';
+          default = htms;
         };
       }
     );
