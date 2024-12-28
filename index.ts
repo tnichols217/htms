@@ -140,13 +140,15 @@ let processFile = async (filepath: string, config: Option, attrs = null as Named
 let processFileString = async (filepath: string, config: Option, isMD = false, children = null as NodeListOf<ChildNode> | null): Promise<string> => {
     filepath = path.normalize(filepath);
     let htmlString = (await processFile(filepath, config, null, children, isMD)).document.toString()
-    const formattedHtml = await prettier.format(config.template.prefix + htmlString + config.template.postfix, Object.assign({},
-        config.format.prettierConfig,
-        {
-            parser: "html"
-        }
-    ));
-    return formattedHtml
+    if (config.format.pretty) {
+        htmlString = await prettier.format(config.template.prefix + htmlString + config.template.postfix, Object.assign({},
+            config.format.prettierConfig,
+            {
+                parser: "html"
+            }
+        ));
+    }
+    return htmlString
 }
 
 let processDirectory = async (dirpath: string, outpath: string, config: GetOption) => {
@@ -174,6 +176,7 @@ let processDirectory = async (dirpath: string, outpath: string, config: GetOptio
                         await fs.writeFile(op, o)
                     })
             default:
+                fs.copyFile(p, path.resolve(outpath, f))
         }
     }))
 }
@@ -228,8 +231,10 @@ let argv = await yargs(process.argv.slice(2))
     .alias('c', 'config')
     .nargs('c', 1)
     .default('c', 'none')
+    .example('htms build -c config.nix', 'use config.nix as the configurator')
     .help('h')
     .alias('h', 'help')
+    .alias('V', 'version')
     .epilog('Trevor Nichols 2024')
     .parse();
 
