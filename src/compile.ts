@@ -135,7 +135,6 @@ export const processDirectory = async (dirpath: string, outpath: string, config:
                 if (conf.files.extensions.ignore.includes(ext)) return
                 let outp = path.resolve(outpath, f)
                 if (await fs.stat(p).then(s => s.isDirectory())) return
-                fs.unlink(outp)
                 fs.copyFile(p, outp)
         }
     }))
