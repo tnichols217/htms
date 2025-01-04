@@ -87,7 +87,7 @@ export const deepMerge = <T extends object>(...objects: T[]): T => {
 
 export const processConfig = async (cfgfile: string): Promise<GetOption> => {
     cfgfile = path.normalize(cfgfile);
-    const proc = Bun.spawn(["nix", "--experimental-features", "nix-command flakes", "eval", "--json", "--file", cfgfile]);
+    const proc = Bun.spawn(["nix", "--experimental-features", "nix-command", "eval", "--json", "--file", cfgfile]);
     const text = await new Response(proc.stdout).text();
     try {
         const options: OptionFile = JSON.parse(text)
@@ -102,8 +102,7 @@ export const processConfig = async (cfgfile: string): Promise<GetOption> => {
         }
     }
     catch (e) {
-        console.error("Error processing configuration file:", e)
         console.error("Config: ", text)
-        throw e;
+        throw e
     }
 }
