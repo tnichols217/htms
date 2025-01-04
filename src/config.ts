@@ -87,7 +87,7 @@ export const deepMerge = <T extends object>(...objects: T[]): T => {
 
 export const processConfig = async (cfgfile: string): Promise<GetOption> => {
     cfgfile = path.normalize(cfgfile);
-    const proc = Bun.spawn(["nix", "eval", "--json", "--file", cfgfile]);
+    const proc = Bun.spawn(["nix", "--experimental-features", "nix-command flakes", "eval", "--json", "--file", cfgfile]);
     const text = await new Response(proc.stdout).text();
     const options: OptionFile = JSON.parse(text)
     let files = new Map<string, Option[]>()

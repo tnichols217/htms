@@ -4,6 +4,8 @@
   gitignoreSource,
   stdenv,
   bun,
+  pkgs,
+  ...
 }:
 let
   src = gitignoreSource flake-root;
@@ -48,6 +50,10 @@ let
 in
 stdenv.mkDerivation {
   inherit pname version src;
+
+  buildInputs = [
+    pkgs.nix
+  ];
 
   nativeBuildInputs = [
     node_modules
