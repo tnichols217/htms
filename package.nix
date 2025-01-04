@@ -51,10 +51,6 @@ in
 stdenv.mkDerivation {
   inherit pname version src;
 
-  buildInputs = [
-    pkgs.nix
-  ];
-
   nativeBuildInputs = [
     node_modules
     # nodejs-slim_latest

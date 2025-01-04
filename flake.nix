@@ -49,9 +49,13 @@
         };
         packages = rec {
           script = pkgs.callPackage ./package.nix { flake-root = ./.; gitignoreSource = inputs.gitignore.lib.gitignoreSource; };
-          htms = pkgs.writeShellScriptBin "htms" ''
-            ${pkgs.bun}/bin/bun ${script}/bin/index.js $@
-          '';
+          htms = pkgs.writeShellApplication {
+            name = "htms";
+            runtimeInputs = with pkgs; [ bun nix script ];
+            text = ''
+              bun ${script}/bin/index.js $@
+            '';
+          };
           default = htms;
         };
       }
