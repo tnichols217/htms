@@ -53,7 +53,7 @@
             name = "htms";
             runtimeInputs = with pkgs; [ bun nix script ];
             text = ''
-              bun ${script}/bin/index.js $@
+              bun ${script}/bin/index.js "$@"
             '';
           };
           default = htms;
