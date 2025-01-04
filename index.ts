@@ -22,7 +22,7 @@ let argv = await yargs(process.argv.slice(2))
     .alias('h', 'help')
     .alias('V', 'version')
     .epilog('Trevor Nichols 2024')
-    .version("v0.0.7")
+    .version("v0.0.7b")
     .parse();
 
 let conf = (argv.c != "none") ? await processConfig(argv.c) : (_: string) => DEF_OPTIONS

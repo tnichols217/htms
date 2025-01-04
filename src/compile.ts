@@ -5,7 +5,7 @@ import fs from "node:fs/promises";
 import { type GetOption, type Option } from './config';
 import { getMDRenderer } from './md';
 
-export const processAttributes = (obj: Element, config: Option, attrs: NamedNodeMap | null, children: NodeListOf<ChildNode> | null): Element => {
+export const processAttributes = (doc: Document, obj: Element, config: Option, attrs: NamedNodeMap | null, children: NodeListOf<ChildNode> | null): Element => {
     if (attrs != null) {
         Array.from(obj.attributes).forEach(a => {
             obj.removeAttribute(a.name)
@@ -16,24 +16,29 @@ export const processAttributes = (obj: Element, config: Option, attrs: NamedNode
         })
     }
 
-    if (obj.children.length == 0) {
-        if (obj.textContent?.includes(config.template.nesting)) {
-            if (children != null) {
-                obj.replaceChildren(...Array.from(children).map(c => c.cloneNode(true)))
-            } else {
-                obj.textContent = obj.textContent.replace(config.template.nesting, "")
+    obj.replaceChildren(...Array.from(obj.childNodes).map(c => {
+        if (c.nodeName.startsWith("#")) {
+            if (c.textContent?.includes(config.template.nesting)) {
+                if (children != null) {
+                    let newEl = doc.createElement("div")
+                    newEl.replaceChildren(...Array.from(children).map(c => c.cloneNode(true)))
+                    return newEl
+                } else {
+                    c.textContent = c.textContent.replace(config.template.nesting, "")
+                }
+            } else if (attrs != null) {
+                c.textContent = c?.textContent?.replace(new RegExp(config.template.attribute), (_, v) => attrs.getNamedItem(v)?.value || "") || ""
             }
-        } else if (attrs != null) {
-            obj.textContent = obj?.textContent?.replace(new RegExp(config.template.attribute), (_, v) => attrs.getNamedItem(v)?.value || "") || ""
+            return c
+        } else {
+            return processAttributes(doc, c as Element, config, attrs, children)
         }
-    } else {
-        Array.from(obj.children).map(c => processAttributes(c, config, attrs, children))
-    }
+    }))
     return obj
 }
 
-export const processObject = async (doc: Document, obj: Element[], fp: path.ParsedPath, config: Option, attrs = null as NamedNodeMap | null, children = null as NodeListOf<ChildNode> | null, refs = new Map<string, string>()): Promise<DocumentFragment> => {
-    let imports = obj.filter(a => a.tagName == config.imports.tag)
+export const processObject = async (doc: Document, obj: ChildNode[], fp: path.ParsedPath, config: Option, attrs = null as NamedNodeMap | null, children = null as NodeListOf<ChildNode> | null, refs = new Map<string, string>()): Promise<DocumentFragment> => {
+    let imports = obj.filter(a => a.nodeName == config.imports.tag) as Element[]
     let ref_copy = new Map<string, string>(refs)
     imports.forEach(i => 
         ref_copy.set(
@@ -43,32 +48,33 @@ export const processObject = async (doc: Document, obj: Element[], fp: path.Pars
     )
 
     // process attributes
-    obj.forEach(c => processAttributes(c, config, attrs, children))
+    obj.filter(c => !c.nodeName.startsWith("#")).map(c => c as Element).forEach(c => processAttributes(doc, c, config, attrs, children))
 
     // process children
     obj = await Promise.all(obj.map(
         async c => {
-            if (c.children.length != 0) {
-                c.replaceChildren(
-                    ...Array.from(
-                        (await processObject(
-                            doc, Array.from(c.children), fp, config, attrs, children, ref_copy
-                        )).children
-                    )
-                )
+            if (c.nodeName.startsWith("#")) {
+                return c
             }
+            (c as Element).replaceChildren(
+                ...Array.from(
+                    (await processObject(
+                        doc, Array.from(c.childNodes), fp, config, attrs, children, ref_copy
+                    )).childNodes
+                )
+            )
             return c
         }
     ))
 
     let ret = doc.createDocumentFragment();
 
-    (await Promise.all(obj.filter(a => a.tagName != config.imports.tag).map(async c => {
-        let tag = c.tagName
+    (await Promise.all((obj.filter(a => a.nodeName != config.imports.tag) as Element[]).map(async c => {
+        let tag = c.nodeName
         let ref = ref_copy.get(tag)
         if (ref != null) {
             let subFile = await processFile(ref, config, c.attributes, c.childNodes)
-            return Array.from(subFile.document.children).map(c => c.cloneNode(true))
+            return Array.from(subFile.document.childNodes).map(c => c.cloneNode(true))
         }
         return [c.cloneNode(true)]
     }))).flat(1).forEach(c => ret.appendChild(c))
@@ -87,7 +93,7 @@ export const processFile = async (filepath: string, config: Option, attrs = null
     
     let doc = parseHTML(text)
 
-    doc.document.replaceChildren(...Array.from((await processObject(doc.document, Array.from(doc.document.children), fp, config, attrs, children)).children))
+    doc.document.replaceChildren(...Array.from((await processObject(doc.document, Array.from(doc.document.childNodes), fp, config, attrs, children)).children))
 
     return doc
 }
