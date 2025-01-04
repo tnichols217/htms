@@ -89,14 +89,21 @@ export const processConfig = async (cfgfile: string): Promise<GetOption> => {
     cfgfile = path.normalize(cfgfile);
     const proc = Bun.spawn(["nix", "--experimental-features", "nix-command flakes", "eval", "--json", "--file", cfgfile]);
     const text = await new Response(proc.stdout).text();
-    const options: OptionFile = JSON.parse(text)
-    let files = new Map<string, Option[]>()
-    options.forEach(o => Object.entries(o).forEach(k => globSync(k[0]).forEach(file => files.set(file, [...(files.get(file) || []), k[1]]))))
-    let files_condensed = Object.fromEntries(files.entries().map(([file, op]) => {
-        let f = path.parse(file)
-        return [ path.resolve(f.dir, f.base), deepMerge(DEF_OPTIONS, ...op) ]
-    }))
-    return (filename: string) => {
-        return files_condensed[path.normalize(filename)] || DEF_OPTIONS
+    try {
+        const options: OptionFile = JSON.parse(text)
+        let files = new Map<string, Option[]>()
+        options.forEach(o => Object.entries(o).forEach(k => globSync(k[0]).forEach(file => files.set(file, [...(files.get(file) || []), k[1]]))))
+        let files_condensed = Object.fromEntries(files.entries().map(([file, op]) => {
+            let f = path.parse(file)
+            return [ path.resolve(f.dir, f.base), deepMerge(DEF_OPTIONS, ...op) ]
+        }))
+        return (filename: string) => {
+            return files_condensed[path.normalize(filename)] || DEF_OPTIONS
+        }
+    }
+    catch (e) {
+        console.error("Error processing configuration file:", e)
+        console.error("Config: ", text)
+        throw e;
     }
 }
