@@ -1,6 +1,9 @@
 name: build-htms
 description: Build an htms project with a GitHub action
 author: Trevor Nichols
+branding:
+  icon: arrow-right
+  color: blue
 inputs:
   input:
     description: 'Source directory to build'
@@ -20,5 +23,6 @@ runs:
     - name: Install Nix
       uses: cachix/install-nix-action@v30
     - name: Build Project
+      shell: bash
       run: |
         nix run --experimental-features "nix-command flakes" github:tnichols217/htms#htms -- --input ${{ inputs.input }} --output ${{ inputs.output }} --config ${{ inputs.config }}
