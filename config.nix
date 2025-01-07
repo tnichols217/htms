@@ -32,6 +32,7 @@
           footnote = false;
           deflist = false;
           abbr = false;
+          attrs = false;
           emoji = false;
           container = false;
           ins = false;

@@ -27,6 +27,6 @@ let argv = async () => await yargs(process.argv.slice(2))
     .parse()
 
 argv().then(async a => {
-    let conf = (a.c != "none") ? await processConfig(a.c) : (_: string) => DEF_OPTIONS
+    let conf = (a.c != "none") ? await processConfig(a.c, a.i) : (_: string) => DEF_OPTIONS
     processDirectory(a.i, a.o, conf)
 })

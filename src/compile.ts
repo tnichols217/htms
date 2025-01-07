@@ -40,11 +40,14 @@ export const processAttributes = (doc: Document, obj: Element, config: Option, a
 export const processObject = async (doc: Document, obj: ChildNode[], fp: path.ParsedPath, config: Option, attrs = null as NamedNodeMap | null, children = null as NodeListOf<ChildNode> | null, refs = new Map<string, string>()): Promise<DocumentFragment> => {
     let imports = obj.filter(a => a.nodeName == config.imports.tag) as Element[]
     let ref_copy = new Map<string, string>(refs)
-    imports.forEach(i => 
-        ref_copy.set(
-            i.getAttribute(config.imports.alias)?.toUpperCase() || "",
-            path.resolve(fp.dir, i.getAttribute(config.imports.source) || "")
-        )
+    imports.forEach(i => {
+            let src = i.getAttribute(config.imports.source)
+            src = src?.startsWith("/") ? path.resolve(config.files.root, src.slice(1)) : path.resolve(fp.dir, src || "")
+            return ref_copy.set(
+                i.getAttribute(config.imports.alias)?.toUpperCase() || "",
+                src
+            )
+        }
     )
 
     // process attributes

@@ -33,6 +33,7 @@ export const DEF_OPTIONS = {
             footnote: false,
             deflist: false,
             abbr: false,
+            attrs: false,
             emoji: false,
             container: false,
             ins: false,
@@ -54,6 +55,7 @@ export const DEF_OPTIONS = {
             ignore: [".htms"]
         },
         md_renderer: "render.htms",
+        root: "."
     },
     imports: {
         tag: "IMPORT",
@@ -85,8 +87,10 @@ export const deepMerge = <T extends object>(...objects: T[]): T => {
     return deepMerge(...objects)
 }
 
-export const processConfig = async (cfgfile: string): Promise<GetOption> => {
+export const processConfig = async (cfgfile: string, root: string): Promise<GetOption> => {
     cfgfile = path.normalize(cfgfile);
+    let r = path.parse(root);
+    root = path.resolve(r.dir, r.base)
     let text = "{}"
     if (cfgfile.endsWith(".nix")) {
         const proc = Bun.spawn(["nix", "--experimental-features", "nix-command", "eval", "--json", "--file", cfgfile]);
@@ -100,7 +104,9 @@ export const processConfig = async (cfgfile: string): Promise<GetOption> => {
         options.forEach(o => Object.entries(o).forEach(k => globSync(k[0]).forEach(file => files.set(file, [...(files.get(file) || []), k[1]]))))
         let files_condensed = Object.fromEntries(files.entries().map(([file, op]) => {
             let f = path.parse(file)
-            return [ path.resolve(f.dir, f.base), deepMerge(DEF_OPTIONS, ...op) ]
+            let conf = deepMerge(DEF_OPTIONS, ...op)
+            conf.files.root = path.resolve(root, conf.files.root)
+            return [ path.resolve(f.dir, f.base), conf ]
         }))
         return (filename: string) => {
             return files_condensed[path.normalize(filename)] || DEF_OPTIONS
