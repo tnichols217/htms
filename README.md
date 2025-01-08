@@ -20,7 +20,7 @@ HTMS is a simple SSG that compiles a directory of html representing a website di
 
 ### Importing
 
-HTMS allows for react-like components by adding an `import` tag that should be placed at the top of html files.
+HTMS allows for WebComponents-like components by adding an `import` tag that should be placed at the top of html files.
 
 `import` tags add components from other html files into the current file, while passing all children and attributes to the component.
 
@@ -121,4 +121,4 @@ Formatting support is provided by the `prettier` package. All relevant config op
 # TODO
 
 1. The minify option does not do anything at the moment
-2. Add support for markdown extensions for highlighting, subscripting, superscripting, etc.
+2. 
