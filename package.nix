@@ -19,7 +19,6 @@ let
     inherit src version;
 
     nativeBuildInputs = [ bun ];
-    # buildInputs = [ nodejs-slim_latest ];
 
     dontConfigure = true;
     dontFixup = true; # patchShebangs produces illegal path references in FODs
@@ -43,7 +42,7 @@ let
       runHook postInstall
     '';
 
-    outputHash = if stdenv.isLinux then "sha256-hF2ZWm2o3Vkm+DRHtk58tb+t1AGf+Kr7nEztaQawjLY=" else "";
+    outputHash = if stdenv.isLinux then "sha256-aw8ixJQsByJMyRwHClwoW6LrOX5ks2tGDMIuYnt5diM=" else "";
     outputHashAlgo = "sha256";
     outputHashMode = "recursive";
   };
@@ -53,7 +52,6 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [
     node_modules
-    # nodejs-slim_latest
     bun
   ];
 
@@ -74,7 +72,7 @@ stdenv.mkDerivation {
   buildPhase = ''
     runHook preBuild
 
-    bun build index.ts --target bun --minify --outfile index.js
+    bun build index.ts --target bun --outfile index.js
 
     runHook postBuild
   '';

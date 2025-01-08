@@ -1,12 +1,19 @@
 import yargs from 'yargs';
-import { DEF_OPTIONS, processConfig } from './src/config';
+import { processConfig } from './src/config';
 import { processDirectory } from './src/compile';
 import { version } from './package.json';
+import chokidar from 'chokidar';
 
-let argv = async () => await yargs(process.argv.slice(2))
+type yarg = {
+    i: string,
+    o: string,
+    c: string,
+}
+const build = async <T extends yarg>(a:T) => processDirectory(a.i, a.o, await processConfig(a.c, a.i))
+
+await yargs(process.argv.slice(2))
+    .scriptName('htms')
     .usage('Usage: htms <command> [options]')
-    .command('build', 'Build a directory of source files')
-    .example('htms build -i src/ -o out/', 'build the src/ directory to the out/ directory')
     .alias('i', 'input')
     .nargs('i', 1)
     .default('i', 'src')
@@ -23,10 +30,12 @@ let argv = async () => await yargs(process.argv.slice(2))
     .alias('h', 'help')
     .alias('V', 'version')
     .epilog('Trevor Nichols 2025')
+    .command(['build', 'b'], 'Build a directory of source files', i => i, build)
+    .command(['watch', 'w'], 'Watch a directory of source files, and build upon changes', i => i,
+        async a => {
+            chokidar.watch(a.i).on("all", () => build(a))
+        }
+    )
+    .example('htms build -i src/ -o out/', 'build the src/ directory to the out/ directory')
     .version(version)
     .parse()
-
-argv().then(async a => {
-    let conf = (a.c != "none") ? await processConfig(a.c, a.i) : (_: string) => DEF_OPTIONS
-    processDirectory(a.i, a.o, conf)
-})

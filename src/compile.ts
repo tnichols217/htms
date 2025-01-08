@@ -2,8 +2,9 @@ import {parseHTML} from 'linkedom';
 import prettier from 'prettier';
 import path from 'path';
 import fs from "node:fs/promises";
-import { type GetOption, type Option } from './config';
+import { type GetOption, type Option, fileProcessor } from './config';
 import { getMDRenderer } from './md';
+import * as sass from 'sass';
 
 export const processAttributes = (doc: Document, obj: Element, config: Option, attrs: NamedNodeMap | null, children: NodeListOf<ChildNode> | null): Element => {
     if (attrs != null) {
@@ -125,29 +126,50 @@ export const processDirectory = async (dirpath: string, outpath: string, config:
         let pa = path.parse(p)
         let conf = config(p)
         let ext = pa.ext.toLowerCase()
-        switch (ext) {
-            case conf.files.extensions.html:
+        let typ = conf.files.extensions.mapping[ext] || conf.files.extensions.mapping.default
+        typ = Object.values(fileProcessor).find(a => a == typ) || conf.files.extensions.mapping.default
+        switch (typ) {
+            case fileProcessor.html: {
                 return processFileString(p, conf)
-                    .then(async o => {
-                        let op = path.resolve(outpath, f)
-                        await fs.mkdir(path.parse(op).dir, { recursive: true })
+                .then(async o => {
+                    let op = path.resolve(outpath, f)
+                    await fs.mkdir(path.parse(op).dir, { recursive: true })
                         await fs.writeFile(op, o)
                     })
-            case conf.files.extensions.md:
+            }
+            case fileProcessor.md: {
                 let renderer = path.resolve(pa.dir, conf.files.md_renderer)
                 let md = await processFile(p, conf, null, null, true)
+                let fo = path.parse(f)
                 return processFileString(renderer, conf, false, md.document.childNodes)
                     .then(async o => {
-                        let op = path.resolve(outpath, f.substring(0, f.length-3) + conf.files.extensions.html)
+                        let op = path.resolve(outpath, fo.name + conf.files.extensions.html)
                         await fs.mkdir(path.parse(op).dir, { recursive: true })
                         await fs.writeFile(op, o)
                     })
-            default:
-                if (conf.files.extensions.ignore.includes(ext)) return
+            }
+            case fileProcessor.ignore:
+                return
+            case fileProcessor.sass: {
+                console.log(`Compiling SASS file: ${p}`)
+                let c = sass.compile(p)
+                let fo = path.parse(f)
+                let op = path.resolve(outpath, fo.name + conf.files.extensions.css)
+                await fs.mkdir(path.parse(op).dir, { recursive: true })
+                await fs.writeFile(op, c.css.toString())
+                return
+            }
+            case fileProcessor.less:
+            case fileProcessor.copy:
+            case fileProcessor.css:
+            case fileProcessor.js:
+            case fileProcessor.ts: {
                 if (await fs.stat(p).then(s => s.isDirectory())) return
                 let outp = path.resolve(outpath, f)
                 await fs.mkdir(path.parse(outp).dir, { recursive: true })
                 await fs.copyFile(p, outp)
+                return
+            }
         }
     }))
 }

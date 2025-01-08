@@ -17,6 +17,11 @@ inputs:
     description: 'Config file to use'
     required: false
     default: 'none'
+  branch:
+    description: 'Branch, commit hash, or tag of htms to use'
+    required: false
+    default: ''
+
 runs:
   using: 'composite'
   steps:
@@ -25,4 +30,4 @@ runs:
     - name: Build Project
       shell: bash
       run: |
-        nix run --experimental-features "nix-command flakes" github:tnichols217/htms#htms -- --input ${{ inputs.input }} --output ${{ inputs.output }} --config ${{ inputs.config }}
+        nix run --experimental-features "nix-command flakes" "github:tnichols217/htms#htms/${{ inputs.branch }}" -- --input "${{ inputs.input }}" --output "${{ inputs.output }}" --config "${{ inputs.config }}"

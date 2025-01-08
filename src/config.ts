@@ -1,6 +1,18 @@
 import path from 'path';
 import {globSync} from 'glob';
 
+export enum fileProcessor {
+    html = "html",
+    md = "md",
+    css = "css",
+    sass = "sass",
+    less = "less",
+    js = "js",
+    ts = "ts",
+    copy = "copy",
+    ignore = "ignore"
+}
+
 export const DEF_OPTIONS = {
     template: {
         prefix: '<!DOCTYPE html><html>',
@@ -50,9 +62,19 @@ export const DEF_OPTIONS = {
     },
     files: {
         extensions: {
+            mapping: {
+                ".html": fileProcessor.html,
+                ".md": fileProcessor.md,
+                ".css": fileProcessor.css,
+                ".scss": fileProcessor.sass,
+                ".less": fileProcessor.less,
+                ".js": fileProcessor.js,
+                ".ts": fileProcessor.ts,
+                ".htms": fileProcessor.ignore,
+                default: fileProcessor.copy
+            } as { [ext: string]: fileProcessor, default: fileProcessor },
             html: ".html",
-            md: ".md",
-            ignore: [".htms"]
+            css: ".css"
         },
         md_renderer: "render.htms",
         root: "."
@@ -87,7 +109,12 @@ export const deepMerge = <T extends object>(...objects: T[]): T => {
     return deepMerge(...objects)
 }
 
-export const processConfig = async (cfgfile: string, root: string): Promise<GetOption> => {
+export const processConfig = async (cfgfile: string | undefined, root: string): Promise<GetOption> => {
+    let DEF_O = Object.assign({}, DEF_OPTIONS)
+    DEF_O.files.root = path.resolve(root, DEF_OPTIONS.files.root)
+    if (cfgfile == "none" || cfgfile == undefined) {
+        return (_: string) => DEF_O
+    }
     cfgfile = path.normalize(cfgfile);
     let r = path.parse(root);
     root = path.resolve(r.dir, r.base)
@@ -109,7 +136,7 @@ export const processConfig = async (cfgfile: string, root: string): Promise<GetO
             return [ path.resolve(f.dir, f.base), conf ]
         }))
         return (filename: string) => {
-            return files_condensed[path.normalize(filename)] || DEF_OPTIONS
+            return files_condensed[path.normalize(filename)] || DEF_O
         }
     }
     catch (e) {
