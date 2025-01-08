@@ -151,7 +151,6 @@ export const processDirectory = async (dirpath: string, outpath: string, config:
             case fileProcessor.ignore:
                 return
             case fileProcessor.sass: {
-                console.log(`Compiling SASS file: ${p}`)
                 let c = sass.compile(p)
                 let fo = path.parse(f)
                 let op = path.resolve(outpath, fo.name + conf.files.extensions.css)
