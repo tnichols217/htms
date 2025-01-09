@@ -30,4 +30,4 @@ runs:
     - name: Build Project
       shell: bash
       run: |
-        nix run --experimental-features "nix-command flakes" "github:tnichols217/htms/${{ inputs.branch }}#htms" -- --input "${{ inputs.input }}" --output "${{ inputs.output }}" --config "${{ inputs.config }}"
+        nix run --experimental-features "nix-command flakes" "github:tnichols217/htms/${{ inputs.branch }}#htms" -- build --input "${{ inputs.input }}" --output "${{ inputs.output }}" --config "${{ inputs.config }}"
