@@ -10,11 +10,16 @@ type yarg = {
     c: string,
 }
 
+let lock = false
+
 const build = async <T extends yarg>(a:T) => {
+    if (lock) return
+    lock = true
     console.log("Building...")
     let t = performance.now()
     processDirectory(a.i, a.o, await processConfig(a.c, a.i))
     console.log(`Done building (${Math.round((performance.now()-t)*100)/100} ms)`)
+    lock = false
 }
 
 await yargs(process.argv.slice(2))
@@ -39,10 +44,14 @@ await yargs(process.argv.slice(2))
     .command(['build', 'b'], 'Build a directory of source files', i => i, build)
     .command(['watch', 'w'], 'Watch a directory of source files, and build upon changes', i => i,
         async a => {
-            chokidar.watch(a.i)
-                .on("add", () => build(a))
-                .on("change", () => build(a))
-                .on("unlink", () => build(a))
+            await build(a)
+            let watcher = chokidar.watch(a.i)
+            watcher.on("ready", () => {
+                watcher
+                    .on("add", () => build(a))
+                    .on("change", () => build(a))
+                    .on("unlink", () => build(a))
+            })
         }
     )
     .example('htms build -i src/ -o out/', 'build the src/ directory to the out/ directory')
