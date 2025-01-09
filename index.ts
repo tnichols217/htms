@@ -9,7 +9,13 @@ type yarg = {
     o: string,
     c: string,
 }
-const build = async <T extends yarg>(a:T) => processDirectory(a.i, a.o, await processConfig(a.c, a.i))
+
+const build = async <T extends yarg>(a:T) => {
+    console.log("Building...")
+    let t = performance.now()
+    processDirectory(a.i, a.o, await processConfig(a.c, a.i))
+    console.log(`Done building (${Math.round((performance.now()-t)*100)/100} ms)`)
+}
 
 await yargs(process.argv.slice(2))
     .scriptName('htms')
