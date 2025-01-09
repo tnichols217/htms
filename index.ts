@@ -39,7 +39,10 @@ await yargs(process.argv.slice(2))
     .command(['build', 'b'], 'Build a directory of source files', i => i, build)
     .command(['watch', 'w'], 'Watch a directory of source files, and build upon changes', i => i,
         async a => {
-            chokidar.watch(a.i).on("all", () => build(a))
+            chokidar.watch(a.i)
+                .on("add", () => build(a))
+                .on("change", () => build(a))
+                .on("unlink", () => build(a))
         }
     )
     .example('htms build -i src/ -o out/', 'build the src/ directory to the out/ directory')
